@@ -53,7 +53,7 @@ def generate_launch_description():
         container_name='ros_gz_container',
         create_own_container='False',
         use_composition='True',
-        condition=UnlessCondition('ekf')
+        condition=UnlessCondition(LaunchConfiguration('ekf'))
     )
     camera_bridge_image = Node(
         package='ros_gz_image',

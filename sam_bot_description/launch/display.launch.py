@@ -1,16 +1,19 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 from ros_gz_bridge.actions import RosGzBridge
 from ros_gz_sim.actions import GzServer
-import os
+
 
 def generate_launch_description():
-    pkg_share = FindPackageShare(package='sam_bot_description').find('sam_bot_description')
-    ros_gz_sim_share = FindPackageShare(package='ros_gz_sim').find('ros_gz_sim')
+    pkg_share = get_package_share_directory('sam_bot_description')
+    ros_gz_sim_share = get_package_share_directory('ros_gz_sim')
     gz_spawn_model_launch_source = os.path.join(ros_gz_sim_share, "launch", "gz_spawn_model.launch.py")
     default_model_path = os.path.join(pkg_share, 'src/description/sam_bot_description.urdf')
     default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
@@ -42,6 +45,22 @@ def generate_launch_description():
         create_own_container='False',
         use_composition='True',
     )
+    camera_bridge_image = Node(
+        package='ros_gz_image',
+        executable='image_bridge',
+        name='bridge_gz_ros_camera_image',
+        output='screen',
+        parameters=[{'use_sim_time': True,}],
+        arguments=['/depth_camera/image'],
+    )
+    camera_bridge_depth = Node(
+        package='ros_gz_image',
+        executable='image_bridge',
+        name='bridge_gz_ros_camera_depth',
+        output='screen',
+        parameters=[{'use_sim_time': True,}],
+        arguments=['/depth_camera/depth_image'],
+    )
     spawn_entity = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(gz_spawn_model_launch_source),
         launch_arguments={
@@ -60,7 +79,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='gui', default_value='True', description='Flag to enable joint_state_publisher_gui'),
         DeclareLaunchArgument(name='model', default_value=default_model_path, description='Absolute path to robot urdf file'),
         DeclareLaunchArgument(name='rvizconfig', default_value=default_rviz_config_path, description='Absolute path to rviz config file'),
         DeclareLaunchArgument(name='use_sim_time', default_value='True', description='Flag to enable use_sim_time'),
@@ -69,6 +87,8 @@ def generate_launch_description():
         rviz_node,
         gz_server,
         ros_gz_bridge,
+        camera_bridge_image,
+        camera_bridge_depth,
         spawn_entity,
         robot_localization_node,
     ])

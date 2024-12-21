@@ -4,6 +4,7 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -19,6 +20,7 @@ def generate_launch_description():
     default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
     world_path = os.path.join(pkg_share, 'world/my_world.sdf')
     bridge_config_path = os.path.join(pkg_share, 'config/bridge_config.yaml')
+    tf_bridge_config_path = os.path.join(pkg_share, 'config/tf_bridge_config.yaml')
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -45,12 +47,20 @@ def generate_launch_description():
         create_own_container='False',
         use_composition='True',
     )
+    ros_gz_bridge_tf = RosGzBridge(
+        bridge_name='ros_gz_bridge_tf',
+        config_file=tf_bridge_config_path,
+        container_name='ros_gz_container',
+        create_own_container='False',
+        use_composition='True',
+        condition=UnlessCondition('ekf')
+    )
     camera_bridge_image = Node(
         package='ros_gz_image',
         executable='image_bridge',
         name='bridge_gz_ros_camera_image',
         output='screen',
-        parameters=[{'use_sim_time': True,}],
+        parameters=[{'use_sim_time': True}],
         arguments=['/depth_camera/image'],
     )
     camera_bridge_depth = Node(
@@ -58,7 +68,7 @@ def generate_launch_description():
         executable='image_bridge',
         name='bridge_gz_ros_camera_depth',
         output='screen',
-        parameters=[{'use_sim_time': True,}],
+        parameters=[{'use_sim_time': True}],
         arguments=['/depth_camera/depth_image'],
     )
     spawn_entity = IncludeLaunchDescription(
@@ -75,18 +85,21 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}]
+        parameters=[os.path.join(pkg_share, 'config/ekf.yaml'), {'use_sim_time': LaunchConfiguration('use_sim_time')}],
+        condition=IfCondition(LaunchConfiguration('ekf'))
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(name='model', default_value=default_model_path, description='Absolute path to robot urdf file'),
         DeclareLaunchArgument(name='rvizconfig', default_value=default_rviz_config_path, description='Absolute path to rviz config file'),
         DeclareLaunchArgument(name='use_sim_time', default_value='True', description='Flag to enable use_sim_time'),
+        DeclareLaunchArgument(name='ekf', default_value='False', description='Launch ekf node if True, not recommended in simulation'),
         ExecuteProcess(cmd=['gz', 'sim', '-g'], output='screen'),
         robot_state_publisher_node,
         rviz_node,
         gz_server,
         ros_gz_bridge,
+        ros_gz_bridge_tf,
         camera_bridge_image,
         camera_bridge_depth,
         spawn_entity,

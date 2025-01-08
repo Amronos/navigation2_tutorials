@@ -90,7 +90,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='model', default_value=default_model_path, description='Absolute path to robot urdf file'),
+        DeclareLaunchArgument(name='model', default_value=default_model_path, description='Absolute path to robot model file'),
         DeclareLaunchArgument(name='rvizconfig', default_value=default_rviz_config_path, description='Absolute path to rviz config file'),
         DeclareLaunchArgument(name='use_sim_time', default_value='True', description='Flag to enable use_sim_time'),
         DeclareLaunchArgument(name='ekf', default_value='False', description='Launch ekf node if True, not recommended in simulation'),

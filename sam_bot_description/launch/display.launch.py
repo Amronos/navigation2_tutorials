@@ -16,11 +16,11 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('sam_bot_description')
     ros_gz_sim_share = get_package_share_directory('ros_gz_sim')
     gz_spawn_model_launch_source = os.path.join(ros_gz_sim_share, "launch", "gz_spawn_model.launch.py")
-    default_model_path = os.path.join(pkg_share, 'src/description/sam_bot_description.urdf')
-    default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
+    default_model_path = os.path.join(pkg_share, 'src', 'description', 'sam_bot_description.sdf')
+    default_rviz_config_path = os.path.join(pkg_share, 'rviz', 'config.rviz')
     world_path = os.path.join(pkg_share, 'world', 'my_world.sdf')
-    bridge_config_path = os.path.join(pkg_share, 'config/bridge_config.yaml')
-    tf_bridge_config_path = os.path.join(pkg_share, 'config/tf_bridge_config.yaml')
+    bridge_config_path = os.path.join(pkg_share, 'config', 'bridge_config.yaml')
+    tf_bridge_config_path = os.path.join(pkg_share, 'config', 'tf_bridge_config.yaml')
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
